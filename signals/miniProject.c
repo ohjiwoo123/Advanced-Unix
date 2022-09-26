@@ -25,7 +25,7 @@ int main(void)
 {
 	sa_new.sa_handler = SIGINT_handler; /* Point to our function */
 	sigemptyset(&sa_new.sa_mask); /* Clear mask */
-	sa_new.sa_flags = SA_SIGINFO;; /* No special flags */
+	sa_new.sa_flags = SA_SIGINFO; /* No special flags */
 
 	sigaction(SIGINT,&sa_new,&sa_old);
 	signal(SIGUSR1,&SIGUSR1_handler);
@@ -75,16 +75,6 @@ void *t_func(void *arg)
 
 	while(1)
 	{
-		if((keyboard=select(fd_Max+1, &cpy_Reads, 0, 0, NULL))==-1)
-		{
-			perror("select 함수 에러 내용 : ");
-			break;
-		}
-		if(keyboard==0)
-		{
-			continue;
-		}
-
 		if(FD_ISSET(0,&reads))
 		{
 			//handle_Connection();
@@ -128,6 +118,11 @@ void SIGINT_handler(int signo, siginfo_t* si)
 // 무기 변경 함수
 void SIGUSR1_handler(int signo)
 {
+	if(hp <=0)
+	{
+		write(STDOUT_FILENO,"게임이 종료되었습니다, SIGINT 신호를 날리세요\n",63);
+		return;
+	}
 	write(STDOUT_FILENO,"무기를 변경합니다\n",26);
 	switch(weaponFlag)
 	{
@@ -152,6 +147,11 @@ void SIGUSR1_handler(int signo)
 // 공격 함수
 void SIGUSR2_handler(int signo)
 {
+	if(hp <=0)
+	{
+		write(STDOUT_FILENO,"게임이 종료되었습니다, SIGINT 신호를 날리세요\n",63);
+		return;
+	}
 	write(STDOUT_FILENO,"보스를 공격합니다\n",26);
 	switch(weaponFlag)
 	{
