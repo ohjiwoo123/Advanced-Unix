@@ -6,19 +6,14 @@
 
 static int hp = 100; 
 int flag = 0;
+//struct sigaction sa_old; /* Old signal actions */
+//struct sigaction sa_new; /* New signal actions */
 
-struct sigaction sa_old; /* Old signal actions */
-struct sigaction sa_new; /* New signal actions */
 void h_attckWithGun(int signo);
 void h_attackWithKnife(int signo);
 
 void h_attackWithGun(int signo)
 {
-    //if(flag==1)
-    //{
-    	//signal(SIGINT,h_attackWithKnife);
-	//return;
-    //}
     printf("무기로 총이 쥐어집니다. (공격력 : 20)\n");
     printf("총으로 공격!\n");
     hp = hp-20;
@@ -49,6 +44,9 @@ void h_attackWithKnife(int signo)
 
 int main(int argc,char **argv)
 {
+    struct sigaction sa_old; /* Old signal actions */
+    struct sigaction sa_new; /* New signal actions */
+
     sa_new.sa_handler = h_attackWithKnife; /* Point to our function */
     sigemptyset(&sa_new.sa_mask); /* Clear mask */
     sa_new.sa_flags = 0; /* No special flags */
