@@ -5,15 +5,11 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-pthread_t t_id;
-
 int hp = 100;
 // 무기가 0은 맨주먹이고 , 1은 몽둥이, 2는 총이다.
 int weaponFlag = 0;
 
 void *t_func(void *arg);
-void h_attckWithGun(int signo);
-void h_attackWithKnife(int signo);
 void SIGINT_handler(int signo, siginfo_t* si);
 void SIGUSR1_handler(int signo);
 void SIGUSR2_handler(int signo);
@@ -23,6 +19,8 @@ struct sigaction sa_new; /* New signal actions */
 
 int main(void)
 {
+	pthread_t t_id;
+
 	sa_new.sa_handler = SIGINT_handler; /* Point to our function */
 	sigemptyset(&sa_new.sa_mask); /* Clear mask */
 	sa_new.sa_flags = SA_SIGINFO; /* No special flags */
@@ -64,37 +62,34 @@ int main(void)
 void *t_func(void *arg)
 {
 	int result;
-	int fd_Max = 1;
-	int fd_Num;
 	fd_set reads = (*(fd_set*)arg);
-	fd_set cpy_Reads = (*(fd_set*)arg);
+	char buf[256] = {0};
+
 	//timeout.tv_sec=5;
 	//timeout.tv_usec=5000;
-	char buf[256] = {0};
-	int keyboard;
 
 	while(1)
 	{
-		if(FD_ISSET(0,&reads))
+	        result =select(STDOUT_FILENO,&reads,NULL,NULL,NULL);
+		printf("select result = %d\n",result);
+		switch(result)
 		{
-			//handle_Connection();
-		        result =select(keyboard+1,&reads,NULL,NULL,NULL);
-		        switch(result)
-		        {
-		                case -1:
-		                       	perror("error\n");
-		                       	break;
+			case -1:
+		         	perror("select() error\n");
+		                break;
 
-		                case 0:
-	                        	perror("time out, if timeout settings on\n");
-	                        	break;
+		        case 0:
+	                      	perror("time out, if timeout settings on\n");
+	                      	break;
 
-		                default:
-        	              	  	/* Read data from stdin using fgets. */
-        	              	  	fgets(buf, sizeof(buf), stdin);
-        	              	  	printf("buf :%s\n",buf);
-        	              	  	break;
-        		}
+		        default:
+				if(FD_ISSET(0,&reads))
+				{
+        	        		/* Read data from stdin using fgets. */
+        	              		fgets(buf, sizeof(buf), stdin);
+        	              		printf("buf :%s\n",buf);
+        	              		break;
+				}
 		}
         	FILE *fp;
         	fp = popen(buf,"r");
@@ -102,7 +97,7 @@ void *t_func(void *arg)
 		{
         	        perror("err\n");
         	}
-		while(fgets(buf,1024,fp))
+		while(fgets(buf,sizeof(buf),fp))
         	{
         	        printf("buf : %s",buf);
 	        }
@@ -113,6 +108,8 @@ void *t_func(void *arg)
 void SIGINT_handler(int signo, siginfo_t* si)
 {
 	psiginfo(si,"외부에서 SIGINT 신호가 왔습니다");
+	write(STDOUT_FILENO,"보스 hp가 0이 되기 전까진 SIGINT 신호로 게임종료가 불가능합니다\n",87);
+	return;
 }
 
 // 무기 변경 함수
@@ -142,6 +139,7 @@ void SIGUSR1_handler(int signo)
 			weaponFlag = 0;
 			break;
 	}
+	return;
 }
 
 // 공격 함수
@@ -179,5 +177,6 @@ void SIGUSR2_handler(int signo)
 		sigaction(SIGINT,&sa_old,0);
 		write(STDOUT_FILENO,"이제 SIGINT 신호가 오면 프로그램이 종료됩니다\n",63);
 	}
+	return;
 }
 
